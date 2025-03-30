@@ -1,12 +1,15 @@
 import db from "../config/db.js";
+import { v4 as uuidv4 } from "uuid";
+
+const userId = uuidv4();
 
 export const User = {
 	create: (first_name, last_name, username, email, password, callback) => {
 		const query =
-			"INSERT INTO users (first_name, last_name, username, email, password) VALUES (?,?,?, ?, ?)";
+			"INSERT INTO users (id, first_name, last_name, username, email, password) VALUES (?,?,?, ?, ?)";
 		db.query(
 			query,
-			[first_name, last_name, username, email, password],
+			[userId, first_name, last_name, username, email, password],
 			callback
 		);
 	},
