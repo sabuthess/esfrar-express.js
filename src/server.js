@@ -9,14 +9,14 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __dirname = path.dirname(__filename);
 
 const app = express();
+const __dirname = path.resolve();
 
 app.use(cors());
-app.use(express.json()); // Middleware para JSON
-app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Servir imágenes
-
+app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api", userRoutes);
 app.use("/api", imageRoutes); // Rutas de imágenes
 app.use(errorHandler); // Middleware de errores
