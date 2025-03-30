@@ -25,8 +25,11 @@ export const registerUser = async (req, res) => {
 			email,
 			hashedPassword,
 			(err, result) => {
-				if (err) console.log("Error al registrar el usuario:", err);
-				return res.status(500).json({ error: "Error al registrar usuario" });
+				if (err) {
+					console.log("Error al registrar el usuario:", err);
+
+					return res.status(500).json({ error: "Error al registrar usuario" });
+				}
 				res.status(201).json({ result: "Usuario registrado correctamente" });
 			}
 		);
