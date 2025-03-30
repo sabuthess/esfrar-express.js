@@ -6,7 +6,7 @@ const userId = uuidv4();
 export const User = {
 	create: (first_name, last_name, username, email, password, callback) => {
 		const query =
-			"INSERT INTO users (id, first_name, last_name, username, email, password) VALUES (?,?,?, ?, ?)";
+			"INSERT INTO users (id, first_name, last_name, username, email, password) VALUES (?,?,?,?,?,?)";
 		db.query(
 			query,
 			[userId, first_name, last_name, username, email, password],
