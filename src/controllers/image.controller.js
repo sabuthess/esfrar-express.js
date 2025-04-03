@@ -78,3 +78,20 @@ export const getAllImages = (req, res) => {
 		res.status(200).json(results);
 	});
 };
+
+export const getASingleImage = (req, res) => {
+	const { id } = req.params;
+
+	return imageModel.getASingleImage(id, (err, result) => {
+		if (err) {
+			return res
+				.status(500)
+				.json({ error: "Error al treaer la imagen de la db" });
+		}
+		if (!result) {
+			return res.status(404).json({ message: "Imagen no encontrada" });
+		}
+
+		res.status(200).json(result);
+	});
+};

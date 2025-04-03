@@ -35,10 +35,26 @@ export const imageModel = {
 			// Aquí modificamos la ruta del file_path para devolver una URL completa
 			const images = results.map((image) => ({
 				...image,
-				file_path: `http://localhost:3500/uploads/${image.file_path}`, // URL completa
+				file_path: `http://localhost:3500/uploads/${image.file_path}`,
 			}));
 
 			callback(null, images);
+		});
+	},
+
+	getASingleImage: (id, callback) => {
+		const sql = "SELECT * FROM images WHERE id = ?";
+
+		db.query(sql, [id], (err, results) => {
+			if (err) {
+				console.error("Error al obtener la imagen: ", err);
+				callback(err, null);
+			} else {
+				const image = results[0];
+				const url = `http://localhost:3500/uploads/${image.file_path}`;
+
+				callback(null, { url, ...image }); // Devuelve la primera fila que coincide con el id
+			}
 		});
 	},
 };

@@ -16,7 +16,9 @@ export const registerUser = async (req, res) => {
 			return res.status(400).json({ error: "El usuario ya está registrado" });
 		}
 
+		console.log("Generando hash de contraseña...");
 		const hashedPassword = await bcrypt.hash(password, 10);
+		console.log("Hash generado:", hashedPassword);
 
 		User.create(
 			first_name,
@@ -27,7 +29,6 @@ export const registerUser = async (req, res) => {
 			(err, result) => {
 				if (err) {
 					console.log("Error al registrar el usuario:", err);
-
 					return res.status(500).json({ error: "Error al registrar usuario" });
 				}
 				res.status(201).json({ result: "Usuario registrado correctamente" });

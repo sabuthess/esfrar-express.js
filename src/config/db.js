@@ -6,6 +6,7 @@ const connection = mysql.createConnection({
 	user: config_db.db.user,
 	password: config_db.db.password,
 	database: config_db.db.database,
+	connectTimeout: 10000,
 });
 
 connection.connect((err) => {
