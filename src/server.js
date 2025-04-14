@@ -14,7 +14,13 @@ const __filename = fileURLToPath(import.meta.url);
 const app = express();
 const __dirname = path.resolve();
 
-app.use(cors());
+const corsOptions = {
+	origin: "https://esfrar-next-js.vercel.app",
+	methods: "GET,POST,PUT,DELETE",
+	allowedHeaders: "Content-Type,Authorization",
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
