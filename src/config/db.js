@@ -1,7 +1,7 @@
 import mysql from "mysql2";
 import config_db from "./dotenv.js"; // Importa las credenciales
 
-const connection = mysql.createConnection({
+const connection = await mysql.createConnection({
 	host: config_db.db.host,
 	user: config_db.db.user,
 	password: config_db.db.password,

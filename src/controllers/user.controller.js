@@ -59,7 +59,19 @@ export const loginUser = async (req, res) => {
 			}
 		);
 
-		res.json({ message: "¡Login exitoso!", token, userId: user.id });
+		res.json({ message: "¡Login exitoso!", token, user });
+	});
+};
+
+export const FindUser = (req, res) => {
+	const { id } = req.params;
+	User.findById(id, async (err, results) => {
+		if (results.length === 0)
+			return res.status(401).json({ message: "Usuario no encontrado" });
+		else {
+			const user = results[0];
+			res.json({ message: "¡Usuario encontrado!", user });
+		}
 	});
 };
 

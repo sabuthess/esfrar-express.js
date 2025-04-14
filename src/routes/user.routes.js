@@ -1,5 +1,6 @@
 import express from "express";
 import {
+	FindUser,
 	loginUser,
 	registerUser,
 	userProfile,
@@ -7,8 +8,9 @@ import {
 
 const router = express.Router();
 
+router.get("/users/:id", FindUser);
+router.get("/profile", userProfile);
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.get("/profile", userProfile);
 
 export default router;
