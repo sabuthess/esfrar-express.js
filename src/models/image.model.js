@@ -26,7 +26,7 @@ export const imageModel = {
 			// Aquí modificamos la ruta del file_path para devolver una URL completa
 			const images = results.map((image) => ({
 				...image,
-				file_path: `https://bkd-esfrar-expresjs-production.up.railway.app/uploads/${image.file_name}`,
+				file_path: `${process.env.BACKEND_URL}/uploads/${image.file_name}`,
 			}));
 
 			callback(null, images);
@@ -46,7 +46,7 @@ export const imageModel = {
 				callback(err, null);
 			} else {
 				const image = results[0];
-				const url = `https://bkd-esfrar-expresjs-production.up.railway.app/uploads/${image.file_name}`;
+				const url = `${process.env.BACKEND_URL}/uploads/${image.file_name}`;
 
 				callback(null, { url, ...image }); // Devuelve la primera fila que coincide con el id
 			}
@@ -77,7 +77,7 @@ export const imageModel = {
 
 		const images = rows.map((image) => ({
 			...image,
-			file_path: `https://bkd-esfrar-expresjs-production.up.railway.app/uploads/${image.file_name}`,
+			file_path: `${process.env.BACKEND_URL}/uploads/${image.file_name}`,
 		}));
 
 		return images;
@@ -114,7 +114,7 @@ export const imageModel = {
 			} else {
 				const images = results.map((image) => ({
 					...image,
-					file_path: `https://bkd-esfrar-expresjs-production.up.railway.app/uploads/${image.file_name}`,
+					file_path: `${process.env.BACKEND_URL}/uploads/${image.file_name}`,
 				}));
 
 				callback(null, images);
