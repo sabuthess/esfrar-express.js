@@ -1,10 +1,9 @@
 import db from "../config/db.js";
 import { v4 as uuidv4 } from "uuid";
 
-const userId = uuidv4();
-
 export const User = {
 	create: (first_name, last_name, username, email, password, callback) => {
+		const userId = uuidv4(); // ✅ Generar UUID por cada nuevo usuario
 		const query =
 			"INSERT INTO users (id, first_name, last_name, username, email, password) VALUES (?,?,?,?,?,?)";
 		db.query(
