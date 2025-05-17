@@ -22,4 +22,22 @@ export const User = {
 		const query = "SELECT * FROM users WHERE email = ?";
 		db.query(query, [email], callback);
 	},
+
+	findByUsername: (username, callback) => {
+		const query = "SELECT * FROM users WHERE username = ?";
+		db.query(query, [username], callback);
+	},
+	findByEmailPromise: (email) => {
+		return db
+			.promise()
+			.query("SELECT * FROM users WHERE email = ?", [email])
+			.then(([rows]) => rows);
+	},
+
+	findByUsernamePromise: (username) => {
+		return db
+			.promise()
+			.query("SELECT * FROM users WHERE username = ?", [username])
+			.then(([rows]) => rows);
+	},
 };
