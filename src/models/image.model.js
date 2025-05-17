@@ -62,9 +62,10 @@ export const imageModel = {
 			SELECT * FROM images 
 			WHERE LOWER(title) LIKE LOWER(?) 
 			OR LOWER(location) LIKE LOWER(?)
+			OR LOWER(tags) LIKE LOWER(?)
 			LIMIT ? OFFSET ?
 			`;
-			params = [`%${search}%`, `%${search}%`, limit, offset];
+			params = [`%${search}%`, `%${search}%`, `%${search}%`, limit, offset];
 		} else {
 			query = `
 			SELECT * FROM images 
@@ -92,9 +93,10 @@ export const imageModel = {
 			SELECT COUNT(*) AS total FROM images 
 			WHERE LOWER(title) LIKE LOWER(?) 
 			OR LOWER(location) LIKE LOWER(?) 
+			OR LOWER(tags) LIKE LOWER(?)
 			
 		  `;
-			params = [`%${search}%`, `%${search}%`];
+			params = [`%${search}%`, `%${search}%`, `%${search}%`];
 		} else {
 			query = `SELECT COUNT(*) AS total FROM images`;
 			params = [];
@@ -124,13 +126,13 @@ export const imageModel = {
 
 	deleteImage: (image_id, user_id, callback) => {
 		const query = "DELETE FROM images WHERE id = ? AND user_id = ?";
+
 		db.query(query, [image_id, user_id], (err, results) => {
 			if (err) {
-				callback(err, null);
-				return res.status(500).json({ error: "Error del servidor" });
-			} else {
-				callback(null, "Imagen eliminada correctamente");
+				console.error("Error al eliminar la imagen: ", err);
+				return callback(err, null);
 			}
+			callback(null, "Imagen eliminada correctamente");
 		});
 	},
 };
