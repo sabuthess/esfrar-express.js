@@ -17,4 +17,5 @@ router.get("/images/search", getSearchedImages);
 router.get("/images/:id", getASingleImage);
 router.get("/images/users/:user_id", getImagesByUser);
 router.delete("/images/:id", deleteImage);
+
 export default router;

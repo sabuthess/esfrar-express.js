@@ -129,10 +129,40 @@ export const imageModel = {
 
 		db.query(query, [image_id, user_id], (err, results) => {
 			if (err) {
-				console.error("Error al eliminar la imagen: ", err);
 				return callback(err, null);
 			}
 			callback(null, "Imagen eliminada correctamente");
+		});
+	},
+
+	likeImage: (image_id, user_id, callback) => {
+		const query = "INSERT INTO images_likes (image_id, user_id) VALUES(?, ?)";
+
+		db.query(query, [image_id, user_id], (err, result) => {
+			if (err) {
+				if (err.code === "ER_DUP_ENTRY") {
+					return callback({
+						status: 409,
+						message: "Ya diste like a esta imagen",
+					});
+				}
+				return callback(err);
+			}
+			callback(null, { message: "Like registrado" });
+		});
+	},
+
+	getLikesByImageId: (image_id, callback) => {
+		const query = `
+		SELECT users.id, users.username, images_likes.created_at
+		FROM images_likes
+		JOIN users ON users.id = images_likes.user_id
+		WHERE images_likes.image_id = ?
+	`;
+
+		db.query(query, [image_id], (err, results) => {
+			if (err) return callback(err);
+			callback(null, results);
 		});
 	},
 };
