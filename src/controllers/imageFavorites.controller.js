@@ -1,67 +1,84 @@
 import { imageFavoritesModel } from "../models/imageFavorites.model.js";
 
-export const addToFavorites = (req, res) => {
-	const { user_id } = req.body;
+export const addToFavorites = async (req, res) => {
+	const user_id = req.user?.id || req.body.user_id;
 	const image_id = req.params.id;
-
-	if (!user_id || user_id === "undefined" || !image_id) {
-		return res
-			.status(401)
-			.json({ error: "Debes estar logueado para añadir a favoritos." });
-	}
-
-	imageFavoritesModel.addFavorite(user_id, image_id, (err, results) => {
-		if (err) {
-			if (err.code === "ER_DUP_ENTRY") {
-				return res.status(409).json({ message: "Ya está en favoritos" });
-			}
-			return res.status(500).json({ error: err.message });
-		}
-		res.status(201).json({ message: "Imagen añadida a favoritos" });
-	});
-};
-export const getUserFavorites = (req, res) => {
-	const { user_id } = req.query; // O req.params según cómo envíes
-
-	if (!user_id) {
-		return res.status(400).json({ error: "user_id es requerido" });
-	}
-
-	imageFavoritesModel.getFavoritesByUser(user_id, (err, results) => {
-		if (err)
-			return res
-				.status(500)
-				.json({ error: "Error al obtener las imágenes favoritas" });
-		res.status(200).json(results);
-	});
-};
-
-export const removeFromFavorites = (req, res) => {
-	const image_id = req.params.id;
-	const { user_id } = req.body;
 
 	if (!user_id || !image_id) {
 		return res.status(400).json({ error: "user_id e image_id son requeridos" });
 	}
 
-	imageFavoritesModel.removeFavorite(user_id, image_id, (err, results) => {
-		if (err) {
-			return res.status(500).json({ error: err.message });
+	try {
+		await imageFavoritesModel.addFavorite(image_id, user_id);
+		res.status(201).json({ message: "Añadido a favoritos" });
+	} catch (error) {
+		if (error.code === "ER_DUP_ENTRY") {
+			return res.status(409).json({ message: "Ya diste a favoritos" });
 		}
-		res.status(200).json({ message: "Imagen eliminada de favoritos" });
-	});
+		console.error("Error en addFavorite:", error);
+		res.status(500).json({ error: "Error al añadir a favoritos" });
+	}
 };
 
-export const checkIfUserFavorite = (req, res) => {
+export const removeFromFavorites = async (req, res) => {
 	const image_id = req.params.id;
-	const user_id = req.query.user_id; // o desde req.body según el caso
+	const user_id = req.user?.id || req.body.user_id;
 
-	imageFavoritesModel.hasUserFavorite(image_id, user_id, (err, isFavorited) => {
-		if (err) {
-			return res
-				.status(500)
-				.json({ message: "Error al verificar like del usuario." });
-		}
-		res.json({ isFavorited });
-	});
+	if (!user_id || !image_id) {
+		return res.status(400).json({ error: "user_id e image_id son requeridos" });
+	}
+	try {
+		await imageFavoritesModel.removeFavorite(image_id, user_id);
+		res.status(200).json({ message: "Quitado de favoritos" });
+	} catch (error) {
+		console.error("Error en removeFromFavorites:", error);
+		res.status(500).json({ error: "Error al quitar de favoritos" });
+	}
+};
+
+export const checkIfUserFavorite = async (req, res) => {
+	const image_id = req.params.id;
+	const user_id = req.user?.id || req.query.user_id;
+
+	if (!user_id || !image_id) {
+		return res.status(400).json({ error: "user_id e image_id son requeridos" });
+	}
+
+	try {
+		const favorited = await imageFavoritesModel.hasUserFavorite(
+			image_id,
+			user_id
+		);
+		res.json({ hasFavorite: favorited });
+	} catch (error) {
+		console.error("Error en checkIfUserFavorite:", error);
+		res.status(500).json({ error: "Error al verificar favorito del usuario" });
+	}
+};
+
+/* export const getFavoriteCountController = async (req, res) => {
+	try {
+		const { imageId } = req.params;
+		const count = await imageFavoritesModel.getFavoriteCount(imageId);
+		res.json({ imageId, favorites: count });
+	} catch (err) {
+		console.error("Error obteniendo cantidad de favoritos:", err);
+		res.status(500).json({ message: "Error interno del servidor" });
+	}
+}; */
+
+export const getUserFavorites = async (req, res) => {
+	const user_id = req.user?.id;
+
+	if (!user_id) {
+		return res.status(400).json({ error: "user_id es requerido" });
+	}
+
+	try {
+		const results = await imageFavoritesModel.getFavoritesByUser(user_id);
+		res.status(200).json(results);
+	} catch (err) {
+		console.error("Error al obtener imágenes favoritas: ", err);
+		res.status(500).json({ error: "Error al obtener las imágenes favoritas" });
+	}
 };

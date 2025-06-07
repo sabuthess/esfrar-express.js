@@ -1,46 +1,53 @@
 import db from "../config/db.js";
 
 export const imageFavoritesModel = {
-	addFavorite: (userId, image_id, callback) => {
-		const query =
-			"INSERT INTO images_favorites (user_id, image_id) VALUES (?, ?)";
-		db.query(query, [userId, image_id], callback);
-	},
-
-	getFavoritesByUser: (userId, callback) => {
-		const sql = `
-    SELECT i.*
-    FROM images_favorites f
-    JOIN images i ON f.image_id = i.id
-    WHERE f.user_id = ?
-  `;
-
-		db.query(sql, [userId], (err, results) => {
-			if (err) {
-				console.error("Error al obtener imágenes favoritas: ", err);
-				callback(err, null);
-			} else {
-				// Si necesitas formar la URL completa del archivo:
-				const images = results.map((image) => ({
-					...image,
-					file_path: `${process.env.BACKEND_URL}/uploads/${image.file_name}`, // O el campo correcto que tengas
-				}));
-				callback(null, images);
-			}
-		});
-	},
-
-	removeFavorite: (userId, imageId, callback) => {
-		const query =
-			"DELETE FROM images_favorites WHERE user_id = ? AND image_id = ?";
-		db.query(query, [userId, imageId], callback);
-	},
-	hasUserFavorite: (image_id, user_id, callback) => {
+	addFavorite: async (image_id, user_id) => {
 		const sql =
-			"SELECT * FROM images_favorites WHERE image_id = ? AND user_id = ?";
-		db.query(sql, [image_id, user_id], (err, results) => {
-			if (err) return callback(err);
-			callback(null, results.length > 0);
-		});
+			"INSERT INTO images_favorites (image_id, user_id) VALUES (?, ?)";
+
+		try {
+			// Ejecuta la consulta
+			await db.query(sql, [image_id, user_id]);
+			console.log("Imagen agregada a favoritos exitosamente");
+		} catch (error) {
+			console.error("Error al agregar imagen a favoritos:", error);
+			throw new Error("No se pudo agregar la imagen a favoritos");
+		}
+	},
+
+	removeFavorite: async (image_id, user_id) => {
+		const sql =
+			"DELETE FROM images_favorites WHERE image_id = ? AND user_id = ?";
+		await db.query(sql, [image_id, user_id]);
+	},
+
+	hasUserFavorite: async (image_id, user_id) => {
+		const [rows] = await db.query(
+			"SELECT * FROM images_favorites WHERE image_id = ? AND user_id = ?",
+			[image_id, user_id]
+		);
+		return rows.length > 0;
+	},
+	/* 
+	getFavoriteCount: async (image_id) => {
+		const [rows] = await db.query(
+			"SELECT COUNT(*) AS count FROM images_favorites WHERE image_id = ?",
+			[image_id]
+		);
+		return rows[0].count;
+	},
+ */
+	getFavoritesByUser: async (user_id) => {
+		const sql = `
+      SELECT i.*
+      FROM images_favorites f
+      JOIN images i ON f.image_id = i.id
+      WHERE f.user_id = ?
+    `;
+		const [results] = await db.query(sql, [user_id]);
+		return results.map((img) => ({
+			...img,
+			file_path: `${process.env.BACKEND_URL}/uploads/${img.file_name}`,
+		}));
 	},
 };

@@ -5,13 +5,14 @@ import {
 	getUserFavorites,
 	removeFromFavorites,
 } from "../controllers/imageFavorites.controller.js";
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/images/:id/favorite", addToFavorites);
-router.delete("/images/:id/favorite", removeFromFavorites);
+router.post("/:id/favorite", authMiddleware, addToFavorites);
+router.delete("/:id/favorite", authMiddleware, removeFromFavorites);
+router.get("/:id/favorite/check", authMiddleware, checkIfUserFavorite);
+router.get("/user/:id/favorites", authMiddleware, getUserFavorites);
 
-router.get("/images/favorites/users", getUserFavorites);
-router.get("/images/:id/favorites/check", checkIfUserFavorite);
-
+// router.get("/count/:imageId", getFavoriteCountController);
 export default router;

@@ -1,60 +1,85 @@
-import { imageLikesModel } from "../models/imageLikes.model.js";
+import { imageLikeModel } from "../models/imageLikes.model.js";
 
-export const likeImage = (req, res) => {
+export const addLike = async (req, res) => {
+	const user_id = req.user?.id || req.body.user_id;
 	const image_id = req.params.id;
-	const { user_id } = req.body;
 
-	imageLikesModel.addLike(image_id, user_id, (err, result) => {
-		if (err) {
-			if (err.code === "ER_DUP_ENTRY") {
-				return res
-					.status(409)
-					.json({ message: "Ya diste like a esta imagen." });
-			}
-			return res.status(500).json({ message: "Error al dar like." });
+	if (!user_id || !image_id) {
+		return res.status(400).json({ error: "user_id e image_id son requeridos" });
+	}
+
+	try {
+		await imageLikeModel.addLike(image_id, user_id);
+		res.status(201).json({ message: "Like registrado" });
+	} catch (error) {
+		if (error.code === "ER_DUP_ENTRY") {
+			return res.status(409).json({ message: "Ya diste like" });
 		}
-		res.status(201).json({ message: "Like agregado correctamente." });
-	});
+		console.error("Error en addLike:", error);
+		res.status(500).json({ error: "Error al registrar el like" });
+	}
 };
 
-export const dislikeImage = (req, res) => {
+export const removeLike = async (req, res) => {
+	const user_id = req.user?.id || req.body.user_id;
 	const image_id = req.params.id;
-	const { user_id } = req.body;
 
-	imageLikesModel.removeLike(image_id, user_id, (err, result) => {
-		if (err) {
-			return res.status(500).json({ message: "Error al quitar like." });
-		}
-		if (result.affectedRows === 0) {
-			return res.status(404).json({ message: "Like no encontrado." });
-		}
-		res.json({ message: "Like removido correctamente." });
-	});
+	if (!user_id || !image_id) {
+		return res.status(400).json({ error: "user_id e image_id son requeridos" });
+	}
+
+	try {
+		await imageLikeModel.removeLike(image_id, user_id);
+		res.status(200).json({ message: "Like eliminado" });
+	} catch (error) {
+		console.error("Error en removeLike:", error);
+		res.status(500).json({ error: "Error al eliminar el like" });
+	}
 };
 
-export const getLikesCount = (req, res) => {
+export const checkIfUserLiked = async (req, res) => {
 	const image_id = req.params.id;
+	const user_id = req.user?.id || req.query.user_id;
 
-	imageLikesModel.countLikes(image_id, (err, count) => {
-		if (err) {
-			return res
-				.status(500)
-				.json({ message: "Error al obtener cantidad de likes." });
-		}
-		res.json({ likes: count });
-	});
+	if (!user_id || !image_id) {
+		return res.status(400).json({ error: "user_id e image_id son requeridos" });
+	}
+
+	try {
+		const liked = await imageLikeModel.hasUserLiked(image_id, user_id);
+		res.json({ hasLiked: liked });
+	} catch (error) {
+		console.error("Error en checkIfUserLiked:", error);
+		res.status(500).json({ error: "Error al verificar like del usuario" });
+	}
 };
 
-export const checkIfUserLiked = (req, res) => {
+/* export const getLikeCount = async (req, res) => {
 	const image_id = req.params.id;
-	const user_id = req.query.user_id; // o desde req.body según el caso
 
-	imageLikesModel.hasUserLiked(image_id, user_id, (err, hasLiked) => {
-		if (err) {
-			return res
-				.status(500)
-				.json({ message: "Error al verificar like del usuario." });
-		}
-		res.json({ hasLiked });
-	});
+	try {
+		const count = await imageLikeModel.countLikes(image_id);
+		res.json({ likeCount: count });
+	} catch (error) {
+		console.error("Error en getLikeCount:", error);
+		res.status(500).json({ error: "Error al obtener likes" });
+	}
+}; */
+
+export const getUserLikes = async (req, res) => {
+	const user_id = req.user?.id;
+
+	if (!user_id) {
+		return res.status(400).json({ error: "user_id es requerido" });
+	}
+
+	try {
+		const results = await imageLikeModel.getLikesByUser(user_id);
+		res.status(200).json(results);
+	} catch (err) {
+		console.error("Error las imagenes que me gustaron: ", err);
+		res
+			.status(500)
+			.json({ error: "Error al obtener las imágenes que me gustaron" });
+	}
 };

@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 
-// Registro de usuario con verificación de username y email
+// ✅ Registro de usuario
 export const registerUser = async (req, res) => {
 	const { first_name, last_name, username, email, password } = req.body;
 
@@ -14,8 +14,8 @@ export const registerUser = async (req, res) => {
 
 	try {
 		const [emailResults, usernameResults] = await Promise.all([
-			User.findByEmailPromise(email),
-			User.findByUsernamePromise(username),
+			User.findByEmail(email),
+			User.findByUsername(username),
 		]);
 
 		if (emailResults.length > 0) {
@@ -30,37 +30,29 @@ export const registerUser = async (req, res) => {
 
 		const hashedPassword = await bcrypt.hash(password, 10);
 
-		User.create(
-			first_name,
-			last_name,
-			username,
-			email,
-			hashedPassword,
-			(err, result) => {
-				if (err) {
-					console.error("Error al registrar el usuario:", err);
-					return res.status(500).json({ error: "Error al registrar usuario" });
-				}
-				res.status(201).json({ message: "Usuario registrado correctamente" });
-			}
-		);
+		await User.create(first_name, last_name, username, email, hashedPassword);
+
+		res.status(201).json({ message: "Usuario registrado correctamente" });
 	} catch (err) {
 		console.error("Error en el registro:", err);
 		res.status(500).json({ error: "Error del servidor" });
 	}
 };
 
-// Login de usuario
+// ✅ Login de usuario
 export const loginUser = async (req, res) => {
 	const { email, password } = req.body;
 
-	User.findByEmail(email, async (err, results) => {
+	try {
+		const results = await User.findByEmail(email);
+
 		if (results.length === 0) {
 			return res.status(401).json({ message: "Usuario no encontrado" });
 		}
 
 		const user = results[0];
 		const isMatch = await bcrypt.compare(password, user.password);
+
 		if (!isMatch) {
 			return res.status(401).json({ message: "Contraseña incorrecta" });
 		}
@@ -72,36 +64,53 @@ export const loginUser = async (req, res) => {
 		);
 
 		res.json({ message: "¡Login exitoso!", token, user });
-	});
+	} catch (err) {
+		console.error("Error al iniciar sesión:", err);
+		res.status(500).json({ message: "Error del servidor" });
+	}
 };
 
-// Buscar usuario por ID
-export const FindUser = (req, res) => {
+// ✅ Buscar usuario por ID
+export const FindUserbyId = async (req, res) => {
 	const { id } = req.params;
-	User.findById(id, (err, results) => {
+
+	try {
+		const results = await User.findById(id);
+
 		if (results.length === 0) {
 			return res.status(404).json({ message: "Usuario no encontrado" });
 		}
+
 		const user = results[0];
 		res.json({ message: "¡Usuario encontrado!", user });
-	});
+	} catch (err) {
+		console.error("Error al buscar usuario por ID:", err);
+		res.status(500).json({ message: "Error del servidor" });
+	}
 };
 
-// Buscar usuario por nombre de usuario
-export const FindByUsername = (req, res) => {
+// ✅ Buscar por username
+export const FindByUsername = async (req, res) => {
 	const { username } = req.params;
-	User.findByUsername(username, (err, results) => {
+
+	try {
+		const results = await User.findByUsername(username);
+
 		if (results.length === 0) {
 			return res
 				.status(404)
 				.json({ message: "Nombre de usuario no encontrado" });
 		}
+
 		const user = results[0];
 		res.json({ message: "¡Nombre de usuario en uso!", user });
-	});
+	} catch (err) {
+		console.error("Error al buscar por username:", err);
+		res.status(500).json({ message: "Error del servidor" });
+	}
 };
 
-// Obtener perfil del usuario usando JWT
+// ✅ Perfil del usuario usando JWT
 export const userProfile = (req, res) => {
 	const token = req.headers["authorization"];
 
@@ -113,6 +122,7 @@ export const userProfile = (req, res) => {
 		if (err) {
 			return res.status(403).json({ message: "Token inválido" });
 		}
+
 		res.json({ message: "Acceso permitido", user: decoded });
 	});
 };

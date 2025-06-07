@@ -1,6 +1,6 @@
 import express from "express";
 import {
-	FindUser,
+	FindUserbyId,
 	loginUser,
 	registerUser,
 	userProfile,
@@ -8,7 +8,7 @@ import {
 
 const router = express.Router();
 
-router.get("/users/:id", FindUser);
+router.get("/:id", FindUserbyId);
 router.get("/profile", userProfile);
 router.post("/register", registerUser);
 router.post("/login", loginUser);

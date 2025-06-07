@@ -1,21 +1,22 @@
 import express from "express";
 import {
-	deleteImage,
+	uploadImage,
 	getAllImages,
 	getASingleImage,
 	getImagesByUser,
 	getSearchedImages,
-	uploadImage,
+	deleteImage,
 } from "../controllers/image.controller.js";
+
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/upload", uploadImage);
-
-router.get("/images", getAllImages);
-router.get("/images/search", getSearchedImages);
-router.get("/images/:id", getASingleImage);
-router.get("/images/users/:user_id", getImagesByUser);
-router.delete("/images/:id", deleteImage);
-
+router.post("/upload", authMiddleware, uploadImage);
+router.get("/", getAllImages);
+router.get("/search", getSearchedImages);
+router.get("/:id", getASingleImage);
+router.get("/users/:user_id", getImagesByUser);
+router.delete("/:id", authMiddleware, deleteImage);
+router.post("");
 export default router;

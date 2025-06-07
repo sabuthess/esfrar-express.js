@@ -1,29 +1,43 @@
 import db from "../config/db.js";
 
-export const imageLikesModel = {
-	addLike: (image_id, user_id, callback) => {
+export const imageLikeModel = {
+	addLike: async (image_id, user_id) => {
 		const sql = "INSERT INTO images_likes (image_id, user_id) VALUES (?, ?)";
-		db.query(sql, [image_id, user_id], callback);
+		await db.query(sql, [image_id, user_id]);
 	},
 
-	removeLike: (image_id, user_id, callback) => {
+	removeLike: async (image_id, user_id) => {
 		const sql = "DELETE FROM images_likes WHERE image_id = ? AND user_id = ?";
-		db.query(sql, [image_id, user_id], callback);
+		await db.query(sql, [image_id, user_id]);
 	},
 
-	countLikes: (image_id, callback) => {
-		const sql = "SELECT COUNT(*) AS likes FROM images_likes WHERE image_id = ?";
-		db.query(sql, [image_id], (err, results) => {
-			if (err) return callback(err);
-			callback(null, results[0].likes);
-		});
+	hasUserLiked: async (image_id, user_id) => {
+		const [rows] = await db.query(
+			"SELECT * FROM images_likes WHERE image_id = ? AND user_id = ?",
+			[image_id, user_id]
+		);
+		return rows.length > 0;
 	},
 
-	hasUserLiked: (image_id, user_id, callback) => {
-		const sql = "SELECT * FROM images_likes WHERE image_id = ? AND user_id = ?";
-		db.query(sql, [image_id, user_id], (err, results) => {
-			if (err) return callback(err);
-			callback(null, results.length > 0);
-		});
+	/* countLikes: async (image_id) => {
+		const [rows] = await db.query(
+			"SELECT COUNT(*) AS count FROM images_likes WHERE image_id = ?",
+			[image_id]
+		);
+		return rows[0].count;
+	}, */
+
+	getLikesByUser: async (user_id) => {
+		const sql = `
+      SELECT i.*
+      FROM images_likes f
+      JOIN images i ON f.image_id = i.id
+      WHERE f.user_id = ?
+    `;
+		const [results] = await db.query(sql, [user_id]);
+		return results.map((img) => ({
+			...img,
+			file_path: `${process.env.BACKEND_URL}/uploads/${img.file_name}`,
+		}));
 	},
 };

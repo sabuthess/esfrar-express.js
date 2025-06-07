@@ -1,168 +1,122 @@
 import db from "../config/db.js";
 
 export const imageModel = {
-	create: (
-		{ user_id, title, location, file_path, file_name, tags },
-		callback
-	) => {
-		const sql =
-			"INSERT INTO images (user_id, title, location, file_name, file_path, tags) VALUES ( ?, ?, ?, ?, ?, ?)";
-		db.query(
-			sql,
-			[user_id, title, location, file_name, file_path, tags],
-			(err, result) => {
-				if (err) return callback(err);
-				callback(null, result);
-			}
-		);
+	create: async ({ user_id, title, location, file_path, file_name, tags }) => {
+		const sql = `
+      INSERT INTO images (user_id, title, location, file_name, file_path, tags)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+		const [result] = await db.query(sql, [
+			user_id,
+			title,
+			location,
+			file_name,
+			file_path,
+			tags,
+		]);
+		return result;
 	},
 
-	getAll: (callback) => {
-		const sql = "SELECT * FROM images";
-
-		db.query(sql, (err, results) => {
-			if (err) return callback(err);
-
-			// Aquí modificamos la ruta del file_path para devolver una URL completa
-			const images = results.map((image) => ({
-				...image,
-				file_path: `${process.env.BACKEND_URL}/uploads/${image.file_name}`,
-			}));
-
-			callback(null, images);
-		});
+	getAll: async () => {
+		const [results] = await db.query("SELECT * FROM images");
+		return results.map((img) => ({
+			...img,
+			file_path: `${process.env.BACKEND_URL}/uploads/${img.file_name}`,
+		}));
 	},
 
-	getASingleImage: (id, callback) => {
-		const sql = "SELECT * FROM images WHERE id = ?";
-
-		db.query(sql, [id], (err, results) => {
-			if (!results || results.length === 0) {
-				return callback(null, null); // o []
-			}
-
-			if (err) {
-				console.error("Error al obtener la imagen: ", err);
-				callback(err, null);
-			} else {
-				const image = results[0];
-				const url = `${process.env.BACKEND_URL}/uploads/${image.file_name}`;
-
-				callback(null, { url, ...image }); // Devuelve la primera fila que coincide con el id
-			}
-		});
+	getASingleImage: async (id) => {
+		const [results] = await db.query("SELECT * FROM images WHERE id = ?", [id]);
+		if (results.length === 0) return null;
+		const image = results[0];
+		return {
+			...image,
+			file_path: `${process.env.BACKEND_URL}/uploads/${image.file_name}`,
+		};
 	},
 
 	getSearchedImages: async ({ search, limit, offset }) => {
-		let query = "";
-		let params = [];
+		let query;
+		let params;
 
-		if (search && search.trim() !== "") {
+		if (search && search.trim()) {
 			query = `
-			SELECT * FROM images 
-			WHERE LOWER(title) LIKE LOWER(?) 
-			OR LOWER(location) LIKE LOWER(?)
-			OR LOWER(tags) LIKE LOWER(?)
-			LIMIT ? OFFSET ?
-			`;
+        SELECT * FROM images
+        WHERE LOWER(title) LIKE LOWER(?)
+        OR LOWER(location) LIKE LOWER(?)
+        OR LOWER(tags) LIKE LOWER(?)
+        LIMIT ? OFFSET ?
+      `;
 			params = [`%${search}%`, `%${search}%`, `%${search}%`, limit, offset];
 		} else {
-			query = `
-			SELECT * FROM images 
-			LIMIT ? OFFSET ?
-			`;
+			query = "SELECT * FROM images LIMIT ? OFFSET ?";
 			params = [limit, offset];
 		}
 
-		const [rows] = await db.promise().query(query, params);
-
-		const images = rows.map((image) => ({
-			...image,
-			file_path: `${process.env.BACKEND_URL}/uploads/${image.file_name}`,
+		const [rows] = await db.query(query, params);
+		return rows.map((img) => ({
+			...img,
+			file_path: `${process.env.BACKEND_URL}/uploads/${img.file_name}`,
 		}));
-
-		return images;
 	},
 
 	countImages: async (search) => {
-		let query = "";
-		let params = [];
+		let query;
+		let params;
 
-		if (search && search.trim() !== "") {
+		if (search && search.trim()) {
 			query = `
-			SELECT COUNT(*) AS total FROM images 
-			WHERE LOWER(title) LIKE LOWER(?) 
-			OR LOWER(location) LIKE LOWER(?) 
-			OR LOWER(tags) LIKE LOWER(?)
-			
-		  `;
+        SELECT COUNT(*) AS total FROM images
+        WHERE LOWER(title) LIKE LOWER(?)
+        OR LOWER(location) LIKE LOWER(?)
+        OR LOWER(tags) LIKE LOWER(?)
+      `;
 			params = [`%${search}%`, `%${search}%`, `%${search}%`];
 		} else {
-			query = `SELECT COUNT(*) AS total FROM images`;
+			query = "SELECT COUNT(*) AS total FROM images";
 			params = [];
 		}
 
-		const [[result]] = await db.promise().query(query, params);
+		const [[result]] = await db.query(query, params);
 		return result.total;
 	},
 
-	getImagesByUser: (user_id, callback) => {
-		const sql = "SELECT * FROM images WHERE user_id = ?";
-
-		db.query(sql, [user_id], (err, results) => {
-			if (err) {
-				console.error("Error al obtener la imagen: ", err);
-				callback(err, null);
-			} else {
-				const images = results.map((image) => ({
-					...image,
-					file_path: `${process.env.BACKEND_URL}/uploads/${image.file_name}`,
-				}));
-
-				callback(null, images);
-			}
-		});
+	getImagesByUser: async (user_id) => {
+		const [results] = await db.query("SELECT * FROM images WHERE user_id = ?", [
+			user_id,
+		]);
+		return results.map((img) => ({
+			...img,
+			file_path: `${process.env.BACKEND_URL}/uploads/${img.file_name}`,
+		}));
 	},
 
-	deleteImage: (image_id, user_id, callback) => {
-		const query = "DELETE FROM images WHERE id = ? AND user_id = ?";
+	deleteImage: async (image_id, user_id) => {
+		const conn = await db.getConnection();
+		try {
+			await conn.beginTransaction();
 
-		db.query(query, [image_id, user_id], (err, results) => {
-			if (err) {
-				return callback(err, null);
-			}
-			callback(null, "Imagen eliminada correctamente");
-		});
-	},
+			// Elimina likes asociados
+			await conn.query("DELETE FROM images_likes WHERE image_id = ?", [
+				image_id,
+			]);
 
-	likeImage: (image_id, user_id, callback) => {
-		const query = "INSERT INTO images_likes (image_id, user_id) VALUES(?, ?)";
+			// Elimina favoritos si tienes tabla así
+			// await conn.query("DELETE FROM images_favorites WHERE image_id = ?", [image_id]);
 
-		db.query(query, [image_id, user_id], (err, result) => {
-			if (err) {
-				if (err.code === "ER_DUP_ENTRY") {
-					return callback({
-						status: 409,
-						message: "Ya diste like a esta imagen",
-					});
-				}
-				return callback(err);
-			}
-			callback(null, { message: "Like registrado" });
-		});
-	},
+			// Elimina la imagen
+			const [result] = await conn.query(
+				"DELETE FROM images WHERE id = ? AND user_id = ?",
+				[image_id, user_id]
+			);
 
-	getLikesByImageId: (image_id, callback) => {
-		const query = `
-		SELECT users.id, users.username, images_likes.created_at
-		FROM images_likes
-		JOIN users ON users.id = images_likes.user_id
-		WHERE images_likes.image_id = ?
-	`;
-
-		db.query(query, [image_id], (err, results) => {
-			if (err) return callback(err);
-			callback(null, results);
-		});
+			await conn.commit();
+			return result.affectedRows > 0;
+		} catch (error) {
+			await conn.rollback();
+			throw error;
+		} finally {
+			conn.release();
+		}
 	},
 };
