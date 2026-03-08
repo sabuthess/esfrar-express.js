@@ -107,7 +107,7 @@ export const imageModel = {
 			// Elimina la imagen
 			const [result] = await conn.query(
 				"DELETE FROM images WHERE id = ? AND user_id = ?",
-				[image_id, user_id]
+				[image_id, user_id],
 			);
 
 			await conn.commit();
@@ -118,5 +118,51 @@ export const imageModel = {
 		} finally {
 			conn.release();
 		}
+	},
+
+	addFavorite: async (image_id, user_id) => {
+		const sql =
+			"INSERT INTO images_favorites (image_id, user_id) VALUES (?, ?)";
+
+		try {
+			// Ejecuta la consulta
+			await db.query(sql, [image_id, user_id]);
+			console.log("Imagen agregada a favoritos exitosamente");
+		} catch (error) {
+			console.error("Error al agregar imagen a favoritos:", error);
+			throw new Error("No se pudo agregar la imagen a favoritos");
+		}
+	},
+
+	removeFavorite: async (image_id, user_id) => {
+		const sql =
+			"DELETE FROM images_favorites WHERE image_id = ? AND user_id = ?";
+		await db.query(sql, [image_id, user_id]);
+	},
+
+	hasUserFavorite: async (image_id, user_id) => {
+		const [rows] = await db.query(
+			"SELECT * FROM images_favorites WHERE image_id = ? AND user_id = ?",
+			[image_id, user_id],
+		);
+		return rows.length > 0;
+	},
+
+	addLike: async (image_id, user_id) => {
+		const sql = "INSERT INTO images_likes (image_id, user_id) VALUES (?, ?)";
+		await db.query(sql, [image_id, user_id]);
+	},
+
+	removeLike: async (image_id, user_id) => {
+		const sql = "DELETE FROM images_likes WHERE image_id = ? AND user_id = ?";
+		await db.query(sql, [image_id, user_id]);
+	},
+
+	hasUserLiked: async (image_id, user_id) => {
+		const [rows] = await db.query(
+			"SELECT * FROM images_likes WHERE image_id = ? AND user_id = ?",
+			[image_id, user_id],
+		);
+		return rows.length > 0;
 	},
 };
