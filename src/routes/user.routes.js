@@ -1,16 +1,17 @@
 import express from "express";
-import {
-	FindUserbyId,
-	loginUser,
-	registerUser,
-	userProfile,
-} from "../controllers/user.controller.js";
+import { UserController } from "../controllers/user.controller.js";
 
 const router = express.Router();
 
-router.get("/:id", FindUserbyId);
-router.get("/profile", userProfile);
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+router.get("/:id", UserController.FindUserbyId);
+router.get("/profile", UserController.userProfile);
+router.post("/register", UserController.registerUser);
+router.post("/login", UserController.loginUser);
+router.get(
+	"/user/:id/favorites",
+	authMiddleware,
+	UserController.getUserFavorites,
+);
+router.get("/user/:id/likes", authMiddleware, UserController.getUserLikes);
 
 export default router;
